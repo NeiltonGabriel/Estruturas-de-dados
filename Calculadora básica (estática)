@@ -1,0 +1,312 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+void empilhar_o(char novo, char operadores[], int *topo) { // empilha o novo operador na pilha
+    *topo += 1;
+    operadores[*topo] = novo;
+}
+
+void empilhar_n(double novo, double numeros[], int *topo) { // empilha o novo numero na pilha
+    *topo += 1;
+    numeros[*topo] = novo;
+}
+
+void ler(double numeros[], int *topo_n, char operadores[], int *topo_o) {
+    char aux[50]; // array auxiliar para guardar parte da expressao
+
+    while (1) {
+        int c = 0; // indice do array auxiliar
+        while (1) { // vai lendo a entrada ate achar um espaco ou enter, para depois empilhar
+            aux[c] = getchar();
+            if (aux[c] == ' ') break;
+            if (aux[c] == '\n') break;
+            c += 1;
+        }
+        if (aux[c] == '\n') { //
+            double temp = atof(aux); // transforma de string para numero
+            empilhar_n(temp, numeros, topo_n);
+            break;
+        } else if (aux[c - 1] == '+' || aux[c - 1] == '-' || aux[c - 1] == '*' || aux[c - 1] == '/' || aux[c - 1] == '^') {
+            empilhar_o(aux[c - 1], operadores, topo_o);
+        } else if (aux[c - 1] >= '0' && aux[c - 1] <= '9') {
+            double temp = atof(aux);
+            empilhar_n(temp, numeros, topo_n);
+        }
+    }
+}
+
+void inverter_n(double numeros[], int topo){ // inverte a pilha de numeros
+    double aux1[topo + 1], aux2[topo + 1];
+    int topo1 = -1, topo2 = -1;
+
+    while (topo > -1){
+        topo1 += 1;
+        aux1[topo1] = numeros[topo];
+        topo -= 1;
+    }
+
+    while (topo1 > -1){
+        topo2 += 1;
+        aux2[topo2] = aux1[topo1];
+        topo1 -= 1;
+    }
+
+    while (topo2 > -1){
+        topo += 1;
+        numeros[topo] = aux2[topo2];
+        topo2 -= 1;
+    }
+}
+
+void inverter_o(char operadores[], int topo){ // inverte a pilha de operadores
+    char aux1[topo + 1], aux2[topo + 1];
+    int topo1 = -1, topo2 = -1;
+
+    while (topo > -1){
+        topo1 += 1;
+        aux1[topo1] = operadores[topo];
+        topo -= 1;
+    }
+
+    while (topo1 > -1){
+        topo2 += 1;
+        aux2[topo2] = aux1[topo1];
+        topo1 -= 1;
+    }
+
+    while (topo2 > -1){
+        topo += 1;
+        operadores[topo] = aux2[topo2];
+        topo2 -= 1;
+    }
+}
+
+int prioridade(char operadores[], int topo) { // calcula qual a prioridade do maior operador
+    int preferencia = 0;
+    while (topo > -1){
+        if (operadores[topo] == '^' && preferencia < 3) preferencia = 3;
+        else if ((operadores[topo] == '*' || operadores[topo] == '/') && preferencia < 2) preferencia = 2;
+        else if ((operadores[topo] == '+' || operadores[topo] == '-') && preferencia < 1) preferencia = 1;
+        topo -= 1;
+    }
+    return preferencia;
+}
+
+void copiar_n(double numeros_aux[], int topo_aux, double numeros[], int *topo){ // copia da pilha auxiliar para a pilha principal
+    int topo_novo = -1;
+    while (topo_aux > -1){
+        topo_novo += 1;
+        numeros[topo_novo] = numeros_aux[topo_aux];
+        topo_aux -= 1;
+    }
+    *topo = topo_novo;
+}
+
+void copiar_o(char operadores_aux[], int topo_aux, char operadores[], int *topo){ // copia da pilha auxiliar para a pilha principal
+    int topo_novo = -1;
+    while (topo_aux > -1){
+        topo_novo += 1;
+        operadores[topo_novo] = operadores_aux[topo_aux];
+        topo_aux -= 1;
+    }
+    *topo = topo_novo;
+}
+
+void potencia(double numeros[], int *topo_n, char operadores[], int *topo_o){ // faz o calculo de potencia
+    
+    double numeros_aux[*topo_n + 1];
+    char operadores_aux[*topo_o + 1];
+    int topo_aux_n = -1, topo_aux_o = -1, completar = 0;
+
+    while(1){
+
+        if (operadores[*topo_o] == '^'){ // se for um operador de potencia realiza o calculo e empilha o resultado na pilha auxiliar
+            topo_aux_n += 1;
+            double base, expoente, resultado;
+            base = numeros[*topo_n];
+            *topo_n -= 1;
+            expoente = numeros[*topo_n];
+            *topo_n -= 1;
+            resultado = pow(base, expoente);
+            *topo_o -= 1;
+            numeros_aux[topo_aux_n] = resultado;
+            completar = 1;
+            break;
+        }
+        else{ // se nao for operador de potencia, apenas empilha o numero e o operador
+            topo_aux_n += 1;
+            numeros_aux[topo_aux_n] = numeros[*topo_n];
+            *topo_n -= 1;
+            topo_aux_o += 1;
+            operadores_aux[topo_aux_o] = operadores[*topo_o];
+            *topo_o -= 1;
+        }
+    }
+
+    if (completar == 1){ // caso tenha sobrado algum operador
+        while (*topo_o > -1){
+
+            topo_aux_n += 1;
+            numeros_aux[topo_aux_n] = numeros[*topo_n];
+            *topo_n -= 1;
+            topo_aux_o += 1;
+            operadores_aux[topo_aux_o] = operadores[*topo_o];
+            *topo_o -= 1;
+        }
+    }
+    if (*topo_n > -1){ // caso tenha sobrado algum numero
+        topo_aux_n += 1;
+        numeros_aux[topo_aux_n] = numeros[*topo_n];
+        *topo_n -= 1;
+    }
+    copiar_n(numeros_aux, topo_aux_n, numeros, topo_n);
+    copiar_o(operadores_aux, topo_aux_o, operadores, topo_o);
+}
+
+void vezes(double numeros[], int *topo_n, char operadores[], int *topo_o){
+
+    double numeros_aux[*topo_n + 1], numero1, numero2;
+    char operadores_aux[*topo_o + 1];
+    int topo_aux_n = -1, topo_aux_o = -1, completar = 0;
+
+    while (1){
+
+        if (operadores[*topo_o] == '*'){ // se for um operador de multiplicacao realiza o calculo e empilha o resultado na pilha auxiliar
+            topo_aux_n += 1;
+            numero1 = numeros[*topo_n];
+            *topo_n -= 1;
+            numero2 = numeros[*topo_n];
+            *topo_n -= 1;
+            numeros_aux[topo_aux_n] = numero1 * numero2;
+            *topo_o -= 1;
+            completar = 1;
+            break;
+        }
+        else if (operadores[*topo_o] == '/'){ // se for um operador de divisao realiza o calculo e empilha o resultado na pilha auxiliar
+            topo_aux_n += 1;
+            numero1 = numeros[*topo_n];
+            *topo_n -= 1;
+            numero2 = numeros[*topo_n];
+            *topo_n -= 1;
+            numeros_aux[topo_aux_n] = numero1 / numero2;
+            *topo_o -= 1;
+            completar = 1;
+            break;
+        }
+        else{ // se nao for operador apenas empilha o numero e o operador
+            topo_aux_n += 1;
+            numeros_aux[topo_aux_n] = numeros[*topo_n];
+            *topo_n -= 1;
+            topo_aux_o += 1;
+            operadores_aux[topo_aux_o] = operadores[*topo_o];
+            *topo_o -= 1;
+        }
+    }
+    if (completar == 1){ // caso tenha sobrado algum operador
+        while (*topo_o > -1){
+            topo_aux_n += 1;
+            numeros_aux[topo_aux_n] = numeros[*topo_n];
+            *topo_n -= 1;
+            topo_aux_o += 1;
+            operadores_aux[topo_aux_o] = operadores[*topo_o];
+            *topo_o -= 1;
+        }
+    }
+    if (*topo_n > -1){ // caso tenha sobrado algum numero
+        topo_aux_n += 1;
+        numeros_aux[topo_aux_n] = numeros[*topo_n];
+        *topo_n -= 1;
+    }
+    copiar_n(numeros_aux, topo_aux_n, numeros, topo_n);
+    copiar_o(operadores_aux, topo_aux_o, operadores, topo_o);
+}
+
+void mais(double numeros[], int *topo_n, char operadores[], int *topo_o){
+
+    double numeros_aux[*topo_n + 1], numero1, numero2;
+    char operadores_aux[*topo_o + 1];
+    int topo_aux_n = -1, topo_aux_o = -1, completar = 0;
+
+    while(1){
+
+        if (operadores[*topo_o] == '+'){ // se for um operador de soma realiza o calculo e empilha o resultado na pilha auxiliar
+            topo_aux_n += 1;
+            numero1 = numeros[*topo_n];
+            *topo_n -= 1;
+            numero2 = numeros[*topo_n];
+            *topo_n -= 1;
+            numeros_aux[topo_aux_n] = numero1 + numero2;
+            *topo_o -= 1;
+            completar = 1;
+            break;
+        }
+        else if (operadores[*topo_o] == '-'){ // se for um operador de subtracao realiza o calculo e empilha o resultado na pilha auxiliar
+            topo_aux_n += 1;
+            numero1 = numeros[*topo_n];
+            *topo_n -= 1;
+            numero2 = numeros[*topo_n];
+            *topo_n -= 1;
+            numeros_aux[topo_aux_n] = numero1 - numero2;
+            *topo_o -= 1;
+            completar = 1;
+            break;
+        }
+        else{ // se nao for operador apenas empilha o numero e o operador
+            topo_aux_n += 1;
+            numeros_aux[topo_aux_n] = numeros[*topo_n];
+            *topo_n -= 1;
+            topo_aux_o += 1;
+            operadores_aux[topo_aux_o] = operadores[*topo_o];
+            *topo_o -= 1;
+        }
+    }
+    if (completar == 1){ // caso tenha sobrado algum operador
+        while (*topo_o > -1){
+            topo_aux_n += 1;
+            numeros_aux[topo_aux_n] = numeros[*topo_n];
+            *topo_n -= 1;
+            topo_aux_o += 1;
+            operadores_aux[topo_aux_o] = operadores[*topo_o];
+            *topo_o -= 1;
+        }
+    }
+    if (*topo_n > -1){ // caso tenha sobrado algum numero
+        topo_aux_n += 1;
+        numeros_aux[topo_aux_n] = numeros[*topo_n];
+        *topo_n -= 1;
+    }
+    copiar_n(numeros_aux, topo_aux_n, numeros, topo_n);
+    copiar_o(operadores_aux, topo_aux_o, operadores, topo_o);
+}
+
+void conta(double numeros[], int *topo_n, char operadores[], int *topo_o){
+    int pri = 0;
+
+    inverter_n(numeros, *topo_n); // inverte a pilha para que o topo seja o numero mais a direita
+    inverter_o(operadores, *topo_o); // inverte a pilha para que o topo seja o operador mais a direita
+    while (*topo_o > -1){
+
+        pri = prioridade(operadores, *topo_o); // busca qual operador deve ser resolvido primeiro
+
+        if (pri == 3) potencia(numeros, topo_n, operadores, topo_o); // resolve calculos de potencia
+        else if (pri == 2) vezes(numeros, topo_n, operadores, topo_o); // resolve calculos de vezes e divisao
+        else if (pri == 1) mais(numeros, topo_n, operadores, topo_o); // resolve calculos de soma e subtracao
+        else break;
+    }
+}
+
+int main() {
+    int topo_n = -1, topo_o = -1;
+    double numeros[100];
+    char operadores[100];
+
+    printf("Digite a expressao, com espacos entre os numeros e os operandos.\n");
+    printf("Pressione 'enter' para calcular\n");
+
+    ler(numeros, &topo_n, operadores, &topo_o); //responsável por ler e empilhar a expressao
+    conta(numeros, &topo_n, operadores, &topo_o);
+
+    printf("\nA resposta eh:\t%lf\n", numeros[topo_n]);
+    return 0;
+}
