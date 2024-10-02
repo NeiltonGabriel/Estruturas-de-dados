@@ -1,0 +1,93 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct no{
+    char bit;
+    struct no *proximo;
+}No;
+
+typedef struct{
+    No *topo;
+    int tam;
+}Pilha;
+
+void imprimir(Pilha p){
+    while(p.topo){
+        printf("%c", p.topo->bit);
+        p.topo = p.topo->proximo;
+    }
+}
+
+void criar(Pilha *p){
+    p->topo = NULL;
+    p->tam = 0;
+}
+
+void push(Pilha *p, char valor){
+
+    No *novo = calloc(1, sizeof(No));
+    if (novo == NULL) return;
+    novo->bit = valor;
+    novo->proximo = p->topo;
+    p->topo = novo;
+    p->tam += 1;
+}
+
+void parabinario(int numero, Pilha *p){
+
+    do{
+        int quociente, resto;
+        quociente = numero / 2;
+        resto = numero % 2;
+        push(p, resto + '0');
+        numero = quociente;
+    }while(numero > 0);
+}
+
+Pilha inverter(Pilha *gray){
+
+    Pilha aux;
+    criar(&aux);
+
+    while(gray->topo){
+        push(&aux, gray->topo->bit);
+        gray->topo = gray->topo->proximo;
+    }
+    return aux;
+}
+
+void paragray(Pilha binario, Pilha *gray){
+    
+    int contador = 2;
+    push(gray, binario.topo->bit);
+    while(contador <= binario.tam){
+        No *aux = binario.topo->proximo;
+        char atual, proximo;
+        atual = binario.topo->bit;
+        proximo = aux->bit;
+        (atual == proximo) ? push(gray, '0') : push(gray, '1');
+        contador += 1;
+        binario.topo = aux;
+    }
+    *gray = inverter(gray);
+}
+
+int main(){
+
+    int numero;
+    scanf("%d", &numero);
+    Pilha binario, gray;
+    criar(&binario);
+    criar(&gray);
+
+    parabinario(numero, &binario);
+    printf("\n%d em binario: ", numero);
+    imprimir(binario);
+    printf("\nTamanho da 'pilha' -> %d\n", binario.tam);
+    paragray(binario, &gray);
+    printf("\n%d em gray: ", numero);
+    imprimir(gray);
+    printf("\nTamanho da 'pilha' -> %d\n", gray.tam);
+    
+    return 0;
+}
